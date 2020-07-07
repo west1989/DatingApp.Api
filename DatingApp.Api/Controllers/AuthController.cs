@@ -49,10 +49,10 @@ namespace DatingApp.Api.Controllers
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
     {
-      var user = await _authRepository.Login(userForLoginDto.Username, userForLoginDto.Password);
+      var user = await _authRepository.Login(userForLoginDto.Username, userForLoginDto.Password);      
 
       if (user == null)
-        return Unauthorized();
+        return Unauthorized();      
 
       var claims = new Claim[]
       {
