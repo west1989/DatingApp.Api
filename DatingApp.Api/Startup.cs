@@ -66,23 +66,25 @@ namespace DatingApp.Api
       {
         app.UseDeveloperExceptionPage();
       }
-
-      app.UseExceptionHandler(builder =>
+      else
       {
-        builder.Run(async context =>
+
+        app.UseExceptionHandler(builder =>
         {
-          context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-
-          var error = context.Features.Get<IExceptionHandlerFeature>();
-          if (error != null)
+          builder.Run(async context =>
           {
-            context.Response.ApplicationError(error.Error.Message);
-            await context.Response.WriteAsync(error.Error.Message);
-          }
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+            var error = context.Features.Get<IExceptionHandlerFeature>();
+            if (error != null)
+            {
+              context.Response.ApplicationError(error.Error.Message);
+              await context.Response.WriteAsync(error.Error.Message);
+            }
+          });
         });
-      });
 
-
+      }
 
       // app.UseHttpsRedirection();
 
