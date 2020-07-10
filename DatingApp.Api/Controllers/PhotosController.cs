@@ -24,7 +24,7 @@ namespace DatingApp.Api.Controllers
   [Route("api/users/{userId}/photos")]
   [ApiController]
   public class PhotosController : ControllerBase
-  {
+  { 
     private readonly IDatingRepository _repo;
     private readonly IMapper _mapper;
     private readonly IOptions<CloudinarySettings> _cloudinaryConfig;
@@ -97,6 +97,34 @@ namespace DatingApp.Api.Controllers
       }
 
       return BadRequest("Could not add the photo");
+    }
+
+    [HttpPost("{id}/setMain")]
+    public async Task<IActionResult> SetMainPhoto(int userId, int id)
+    {
+      var userClaimId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+      if (userId != int.Parse(userClaimId))
+        return Unauthorized();
+
+      var user = await _repo.GetUser(userId);
+
+      if (!user.Photos.Any(a => a.Id == id))
+        return Unauthorized();
+
+      var photoFromRepo = await _repo.GetPhoto(id);
+
+      if (photoFromRepo.IsMain)
+        return BadRequest("This is already the main photo");
+
+      var currentMainPhoto = await _repo.GetMainPhotoForUser(userId);
+      currentMainPhoto.IsMain = false;
+
+      photoFromRepo.IsMain = true;
+
+      if (await _repo.SaveAll())      
+        return NoContent();
+
+      return BadRequest("Could not set photo to main");
     }
 
   }
