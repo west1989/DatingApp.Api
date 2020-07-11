@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using AutoMapper;
 using DatingApp.Api.Data;
 using DatingApp.Api.Dtos;
 using DatingApp.Api.Models;
@@ -21,11 +22,13 @@ namespace DatingApp.Api.Controllers
   {
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _config;
+    private readonly IMapper _mapper;
 
-    public AuthController(IAuthRepository authRepository, IConfiguration config)
+    public AuthController(IAuthRepository authRepository, IConfiguration config, IMapper mapper)
     {
       _authRepository = authRepository;
       _config = config;
+      _mapper = mapper;
     }
 
     [HttpPost("register")]
@@ -49,15 +52,15 @@ namespace DatingApp.Api.Controllers
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
     {
-      var user = await _authRepository.Login(userForLoginDto.Username, userForLoginDto.Password);      
+      var userRepo = await _authRepository.Login(userForLoginDto.Username, userForLoginDto.Password);      
 
-      if (user == null)
+      if (userRepo == null)
         return Unauthorized();      
 
       var claims = new Claim[]
       {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.Username)
+        new Claim(ClaimTypes.NameIdentifier, userRepo.Id.ToString()),
+        new Claim(ClaimTypes.Name, userRepo.Username)
       };
 
       var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config.GetSection("AppSettings:Token").Value));
@@ -72,8 +75,13 @@ namespace DatingApp.Api.Controllers
 
       var tokenHandler = new JwtSecurityTokenHandler();
       var token = tokenHandler.CreateToken(tokenDescriptor);
+      var user = _mapper.Map<UserForListDto>(userRepo);
 
-      return Ok(new { token = tokenHandler.WriteToken(token) });
+      return Ok(new 
+      { 
+        token = tokenHandler.WriteToken(token),
+        user
+      });
     }
 
   }
