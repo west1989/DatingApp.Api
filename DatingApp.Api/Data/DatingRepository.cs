@@ -44,10 +44,7 @@ namespace DatingApp.Api.Data
 
     public async Task<PagedList<Message>> GetMessagesForUser(MessageParams messageParams)
     {
-      var messages = _context.Messages
-        .Include(u => u.Sender).ThenInclude(p => p.Photos)
-        .Include(r => r.Recipient).ThenInclude(p => p.Photos)
-        .AsQueryable();
+      var messages = _context.Messages.AsQueryable();
 
       switch (messageParams.MessageContainer)
       {
@@ -73,8 +70,6 @@ namespace DatingApp.Api.Data
     public async Task<IEnumerable<Message>> GetMessageThread(int userId, int recipientId)
     {
       var messages = await _context.Messages
-        .Include(u => u.Sender).ThenInclude(p => p.Photos)
-        .Include(u => u.Recipient).ThenInclude(p => p.Photos)
         .Where(w => w.RecipientId == userId && !w.RecipientDeleted && w.SenderId == recipientId
         || w.RecipientId == recipientId && w.SenderId == userId && !w.SenderDeleted)
         .OrderByDescending(o => o.MessageSent)
@@ -91,15 +86,14 @@ namespace DatingApp.Api.Data
 
     public async Task<User> GetUser(int Id)
     {
-      var user = await _context.Users.Include(p => p.Photos).FirstOrDefaultAsync(f => f.Id == Id);
+      var user = await _context.Users.FirstOrDefaultAsync(f => f.Id == Id);
 
       return user;
     }
 
     public  async Task<PagedList<User>> GetUsers(UserParams userParams)
     {
-      var users = _context.Users.Include(p => p.Photos)
-        .OrderByDescending(o => o.LastActive).AsQueryable();
+      var users = _context.Users.OrderByDescending(o => o.LastActive).AsQueryable();
 
       users = users.Where(w => w.Id != userParams.UserId);
       users = users.Where(w => w.Gender == userParams.Gender || string.IsNullOrEmpty(userParams.Gender));
@@ -149,7 +143,7 @@ namespace DatingApp.Api.Data
 
     private async Task<IEnumerable<int>> GetUserLikes(int id, bool likers)
     {
-      var user = await _context.Users.Include(x => x.Likers).Include(x => x.Likees).FirstOrDefaultAsync(u => u.Id == id);
+      var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
       if (likers)
       {
